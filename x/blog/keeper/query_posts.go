@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -25,10 +26,10 @@ func (k Keeper) Posts(c context.Context, req *types.QueryPostsRequest) (*types.Q
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// Get the key-value module store using the store key (in our case store key is "chain")
-	store := ctx.KVStore(k.storeKey)
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 
 	// Get the part of the store that keeps posts (using post key, which is "Post-value-")
-	postStore := prefix.NewStore(store, []byte(types.PostKey))
+	postStore := prefix.NewStore(storeAdapter, []byte(types.PostKey))
 
 	// Paginate the posts store based on PageRequest
 	pageRes, err := query.Paginate(postStore, req.Pagination, func(key []byte, value []byte) error {

@@ -4,66 +4,56 @@ import (
 	"encoding/binary"
 
 	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"blog/x/blog/types"
 )
 
+func (k Keeper) AppendPost(ctx sdk.Context, post types.Post) uint64 {
+	count := k.GetPostCount(ctx)
+	post.Id = count
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, types.KeyPrefix(types.PostKey))
+	appendedValue := k.cdc.MustMarshal(&post)
+	store.Set(GetPostIDBytes(post.Id), appendedValue)
+	k.SetPostCount(ctx, count+1)
+	return count
+}
+
 func (k Keeper) GetPostCount(ctx sdk.Context) uint64 {
-	// Get the store using storeKey (which is "blog") and PostCountKey (which is "Post/count/")
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostCountKey))
-
-	// Convert the PostCountKey to bytes
-	byteKey := []byte(types.PostCountKey)
-
-	// Get the value of the count
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, []byte{})
+	byteKey := types.KeyPrefix(types.PostCountKey)
 	bz := store.Get(byteKey)
-
-	// Return zero if the count value is not found (for example, it's the first post)
 	if bz == nil {
 		return 0
 	}
-
-	// Convert the count into a uint64
 	return binary.BigEndian.Uint64(bz)
 }
 
+func GetPostIDBytes(id uint64) []byte {
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, id)
+	return bz
+}
+
 func (k Keeper) SetPostCount(ctx sdk.Context, count uint64) {
-	// Get the store using storeKey (which is "blog") and PostCountKey (which is "Post/count/")
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostCountKey))
-
-	// Convert the PostCountKey to bytes
-	byteKey := []byte(types.PostCountKey)
-
-	// Convert count from uint64 to string and get bytes
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, []byte{})
+	byteKey := types.KeyPrefix(types.PostCountKey)
 	bz := make([]byte, 8)
 	binary.BigEndian.PutUint64(bz, count)
-
-	// Set the value of Post/count/ to count
 	store.Set(byteKey, bz)
 }
 
-func (k Keeper) AppendPost(ctx sdk.Context, post types.Post) uint64 {
-	// Get the current number of posts in the store
-	count := k.GetPostCount(ctx)
-
-	// Assign an ID to the post based on the number of posts in the store
-	post.Id = count
-
-	// Get the store
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(types.PostKey))
-
-	// Convert the post ID into bytes
-	byteKey := make([]byte, 8)
-	binary.BigEndian.PutUint64(byteKey, post.Id)
-
-	// Marshal the post into bytes
-	appendedValue := k.cdc.MustMarshal(&post)
-
-	// Insert the post bytes using post ID as a key
-	store.Set(byteKey, appendedValue)
-
-	// Update the post count
-	k.SetPostCount(ctx, count+1)
-	return count
+func (k Keeper) GetPost(ctx sdk.Context, id uint64) (val types.Post, found bool) {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, types.KeyPrefix(types.PostKey))
+	b := store.Get(GetPostIDBytes(id))
+	if b == nil {
+		return val, false
+	}
+	k.cdc.MustUnmarshal(b, &val)
+	return val, true
 }
