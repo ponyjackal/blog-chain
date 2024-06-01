@@ -20,5 +20,5 @@ func (k Keeper) Hello(goCtx context.Context, req *types.QueryHelloRequest) (*typ
 	// TODO: Process the query
 	_ = ctx
 
-	return &types.QueryHelloResponse{}, nil
+	return &types.QueryHelloResponse{Text: "Hello world!"}, nil
 }
