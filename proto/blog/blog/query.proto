@@ -7,6 +7,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "blog/blog/params.proto";
+import "blog/blog/post.proto";
 
 option go_package = "blog/x/blog/types";
 
@@ -22,6 +23,12 @@ service Query {
   // Queries a list of Hello items.
   rpc Hello (QueryHelloRequest) returns (QueryHelloResponse) {
     option (google.api.http).get = "/blog/blog/hello";
+  
+  }
+  
+  // Queries a list of Posts items.
+  rpc Posts (QueryPostsRequest) returns (QueryPostsResponse) {
+    option (google.api.http).get = "/blog/blog/posts";
   
   }
 }
@@ -41,3 +48,15 @@ message QueryHelloResponse {
   string text = 1;
 }
 
+message QueryPostsRequest {
+  // Adding pagination to request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryPostsResponse {
+  // Returning a list of posts
+  repeated Post Post = 1;
+
+  // Adding pagination to response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
