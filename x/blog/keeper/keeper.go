@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"blog/x/blog/types"
+
+	storetypes "cosmossdk.io/store/types"
 )
 
 type (
@@ -17,9 +19,8 @@ type (
 		storeService store.KVStoreService
 		logger       log.Logger
 
-		// the address capable of executing a MsgUpdateParams message. Typically, this
-		// should be the x/gov module account.
 		authority string
+		storeKey  storetypes.StoreKey
 	}
 )
 
@@ -28,7 +29,7 @@ func NewKeeper(
 	storeService store.KVStoreService,
 	logger log.Logger,
 	authority string,
-
+	storeKey storetypes.StoreKey,
 ) Keeper {
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
@@ -39,6 +40,7 @@ func NewKeeper(
 		storeService: storeService,
 		authority:    authority,
 		logger:       logger,
+		storeKey:     storeKey,
 	}
 }
 
