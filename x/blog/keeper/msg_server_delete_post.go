@@ -11,14 +11,8 @@ import (
 	"blog/x/blog/types"
 )
 
-func (k msgServer) UpdatePost(goCtx context.Context, msg *types.MsgUpdatePost) (*types.MsgUpdatePostResponse, error) {
+func (k msgServer) DeletePost(goCtx context.Context, msg *types.MsgDeletePost) (*types.MsgDeletePostResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	var post = types.Post{
-		Creator: msg.Creator,
-		Id:      msg.Id,
-		Title:   msg.Title,
-		Body:    msg.Body,
-	}
 	val, found := k.GetPost(ctx, msg.Id)
 	if !found {
 		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("key %d doesn't exist", msg.Id))
@@ -26,6 +20,6 @@ func (k msgServer) UpdatePost(goCtx context.Context, msg *types.MsgUpdatePost) (
 	if msg.Creator != val.Creator {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "incorrect owner")
 	}
-	k.SetPost(ctx, post)
-	return &types.MsgUpdatePostResponse{}, nil
+	k.RemovePost(ctx, msg.Id)
+	return &types.MsgDeletePostResponse{}, nil
 }
